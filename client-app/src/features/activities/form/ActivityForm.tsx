@@ -1,13 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { useState , ChangeEvent} from "react";
 import { Button, Form, Segment } from "semantic-ui-react";
-import { Activity } from "../../../app/Models/activity";
 import { useStore } from "../../../app/stores/store";
-
-interface Props {
-    createOrEdit: (activity: Activity) => void;
-    submitting: boolean;
-}
 
 export default observer( function ActivityForm(){
     const {activityStore} = useStore();
