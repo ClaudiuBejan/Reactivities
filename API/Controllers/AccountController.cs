@@ -1,11 +1,11 @@
-using Domain;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using API.DTOs;
 using API.Services;
+using Domain;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace API.Controllers
 {
@@ -15,7 +15,7 @@ namespace API.Controllers
     public class AccountController : ControllerBase
     {
         private UserManager<AppUser> _userManager;
-        public TokenService _tokenService { get; }
+        public TokenService _tokenService;
 
         public AccountController(UserManager<AppUser> userManager, TokenService tokenService)
         //above id the dependency injection
@@ -46,14 +46,16 @@ namespace API.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
-            if(await _userManager.Users.AnyAsync(x => x.UserName == registerDto.Username))
-            {
-                return BadRequest("Username is already taken");
-            }
-
             if(await _userManager.Users.AnyAsync(x => x.Email == registerDto.Email))
             {
-                return BadRequest("Email is already taken");
+                ModelState.AddModelError("email", "Email is taken");
+                return ValidationProblem();
+            }
+
+            if(await _userManager.Users.AnyAsync(x => x.UserName == registerDto.Username))
+            {
+                ModelState.AddModelError("username", "Username is taken");
+                return ValidationProblem();
             }
 
             var user = new AppUser
@@ -84,7 +86,7 @@ namespace API.Controllers
             //will be based on that token
             Console.WriteLine("This is the id " + User.FindFirstValue(ClaimTypes.NameIdentifier));
             Console.WriteLine("This is the Email " + User.FindFirstValue(ClaimTypes.Email));
-            var user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var user = await _userManager.FindByEmailAsync(User.FindFirstValue(ClaimTypes.Email));
             return CreateUserObject(user);
         }
 

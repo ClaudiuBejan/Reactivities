@@ -6,7 +6,7 @@ import { format } from "date-fns";
 
 export default class ActivityStore {
     activityRegistry = new Map<string, Activity>();
-    selectedActivity: Activity | undefined = undefined;
+    selectedActivity?: Activity = undefined;
     editMode = false;
     loading= false;
     loadingInitial = false;
@@ -22,23 +22,27 @@ export default class ActivityStore {
 
     get groupedActivities() {
         return Object.entries(
-            this.ActivitiesByDate.reduce((activities, activity) => {
-                const date = format(activity.date!, 'dd MMM yyy');
+            this.activitiesByDate.reduce((activities, activity) => {
+                const date = activity.date!.toISOString().split('T')[0];
                 activities[date] = activities[date] ? [...activities[date], activity] : [activity];
                 return activities;
             }, {} as {[key: string]: Activity[]})
         )
     }
 
+    get activitiesByDate() {
+        return Array.from(this.activityRegistry.values()).sort((a, b) =>
+            a.date!.getTime() - b.date!.getTime());
+    }
+
     loadActivities = async () => {
         this.setLoadingInitial(true);
         try {
             const activities = await agent.Activities.list();
-                activities.forEach(activity => {
-                    this.setActivity(activity);
-                })
-                this.setLoadingInitial(false);
-            
+            activities.forEach(activity => {
+                this.setActivity(activity);
+            })
+            this.setLoadingInitial(false);
         } catch (error) {
             console.log(error);
             this.setLoadingInitial(false);
