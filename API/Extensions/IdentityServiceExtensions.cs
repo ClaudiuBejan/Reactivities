@@ -1,7 +1,9 @@
 using System.Text;
 using API.Services;
 using Domain;
+using Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Persistence;
 
@@ -33,14 +35,22 @@ namespace API.Extensions
                         ValidateAudience = false
                     };
                 });
-                
+
+            services.AddAuthorization(opt => 
+            {
+                opt.AddPolicy("IsActivityHost", policy => 
+                {
+                    policy.Requirements.Add(new IsHostRequirement());
+                });
+            });
+            
+            services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();//variables in this method will remain in memory after the 
+            //service has finished running 
+            
             services.AddScoped<TokenService>();//this is scoped to the html request AddTransient would
             // create the the service specifically for the method, AddSingleton would create
             // the service when the app starts and lives until the app shuts down, but these 
             //don't have the required lifespan
-
-            services.AddScoped<TokenService>();
-
 
             return services;
          }
