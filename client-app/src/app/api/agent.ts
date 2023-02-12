@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
-import { Activity } from "../Models/activity";
+import { Activity, ActivityFormValues } from "../Models/activity";
 import { User, UserFormValues } from "../Models/user";
 import { router } from "../router/Routes";
 import { store } from "../stores/store";
@@ -17,24 +17,24 @@ const responseBody = <T>(response: AxiosResponse<T>) => response.data;
 
 axios.interceptors.request.use(config => {
     const token = store.commonStore.token;
-    if(token && config.headers) config.headers.Authorization = `Bearer ${token}`;
+    if (token && config.headers) config.headers.Authorization = `Bearer ${token}`;
     return config;
 })
 
 axios.interceptors.response.use(async response => {
-        await sleep(1000);
-        return response;
+    await sleep(1000);
+    return response;
 }, (error: AxiosError) => {
-    const {data, status, config} = error.response as AxiosResponse;
+    const { data, status, config } = error.response as AxiosResponse;
     switch (status) {
         case 400:
-            if(config.method === 'get' && data.errors.hasOwnProperty('id')) {
+            if (config.method === 'get' && data.errors.hasOwnProperty('id')) {
                 router.navigate('/not-found');
             }
-            if(data.errors){
+            if (data.errors) {
                 const modalStateErrors = [];
-                for (const key in data.errors){
-                    if(data.errors[key]) {
+                for (const key in data.errors) {
+                    if (data.errors[key]) {
                         modalStateErrors.push(data.errors[key])
                     }
                 }
@@ -70,9 +70,10 @@ const requests = {
 const Activities = {
     list: () => requests.get<Activity[]>('/activities'),
     details: (id: string) => requests.get<Activity>(`/activities/${id}`),
-    create: (activity: Activity) => requests.post<void>(`/activities`, activity),
-    update: (activity: Activity) => requests.put<void>(`/activities/${activity.id}`,activity ), 
-    delete: (id: string) => requests.del<void>(`/activities/${id}`)
+    create: (activity: ActivityFormValues) => requests.post<void>(`/activities`, activity),
+    update: (activity: ActivityFormValues) => requests.put<void>(`/activities/${activity.id}`, activity),
+    delete: (id: string) => requests.del<void>(`/activities/${id}`),
+    attend: (id: string) => requests.post<void>(`activities/${id}/attend`, {})
 }
 
 const Account = {
